@@ -1,0 +1,40 @@
+# Go
+/data/
+*.db
+*.exe
+*.test
+*.out
+vendor/
+
+# Node / frontend
+web/node_modules/
+web/dist/
+web/.vite/
+npm-debug.log*
+.npm
+
+# Env and secrets
+.env
+.env.local
+*.local
+
+# Machine-local Compose merge (host-network overlay copy on the deploy host).
+docker-compose.override.yml
+compose.override.yml
+
+# Local letter fixtures — never commit.
+Demo-doc/
+
+# Agent / editor tooling (not part of this tree)
+.cursor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+*.tsbuildinfo

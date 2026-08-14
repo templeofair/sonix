@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens — mirrored in tailwind.config.js (colors, radius, shadow).
+ * Use bg-card, text-muted, rounded-card, shadow-card, border-border in new components.
+ */
+@layer base {
+  :root {
+    --sonix-surface: #f8f9fa;
+    --sonix-card: #ffffff;
+    --sonix-accent: #5b7c99;
+    --sonix-radius-card: 0.75rem;
+    --sonix-radius-btn: 0.5rem;
+  }
+
+  /*
+   * Narrow-width input floor is 16px (stops iOS Safari zoom-on-focus).
+   * At md+ keep today's denser 14px (text-sm). Prefer text-base md:text-sm on
+   * inputs in components so Tailwind utilities stay consistent; this base rule
+   * is the safety net for any unmarked control.
+   */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  @media (min-width: 768px) {
+    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']),
+    textarea,
+    select {
+      font-size: 0.875rem;
+    }
+  }
+
+  /* Remove 300ms tap delay without disabling intentional gestures. */
+  html {
+    touch-action: manipulation;
+  }
+}
+
+@layer components {
+  /*
+   * Touch target floor (44px) below md; denser at md+ so desktop density stays
+   * close to today's py-2 / py-2.5 controls. Prefer applying `.control` on new
+   * interactive surfaces rather than rewriting every existing button at once.
+   */
+  .control {
+    @apply min-h-[2.75rem] min-w-[2.75rem] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/35;
+  }
+
+  @media (min-width: 768px) {
+    .control {
+      min-height: 2.5rem;
+      min-width: 0;
+    }
+  }
+}
+
+body {
+  @apply bg-surface text-gray-800 antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

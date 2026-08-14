@@ -1,0 +1,20 @@
+# Host-network overlay for the Sonix app.
+#
+# Use when bridge-published ports answer on the server
+# (`curl http://127.0.0.1:9080/health`) but other machines time out.
+#
+#   docker compose -f docker-compose.yml -f deploy/host-network/docker-compose.host.yml up -d
+#
+# Or copy to docker-compose.override.yml in the project root (gitignored).
+#
+# Effects:
+# - App listens on host :9080 / :9443 (Compose "Published ports discarded" is normal).
+# - Ollama on the same host: 127.0.0.1:11434 (not host.docker.internal).
+# - hp-scan already uses host network; keep HP_SCAN_HEALTH_PORT off other host services.
+
+services:
+  app:
+    network_mode: host
+    extra_hosts: []
+    environment:
+      - OLLAMA_BASE_URL=http://127.0.0.1:11434

@@ -1,0 +1,25 @@
+# Compose V2 override: restrict hp-scan to inbox + hp-scan subdirs only.
+#
+# Requires Docker Compose plugin >= 2.26 and Docker Engine >= 26 (volume subpath).
+# Start Sonix app first so inbox/ and hp-scan/ exist in sonix-data.
+#
+#   docker compose -f docker-compose.yml -f deploy/hp-scan/compose.hp-scan.yml --profile hp-scan up -d
+#
+# Compose 1.29 (docker-compose) ignores subpath and fails — use stock docker-compose.yml
+# without this file; see docs/auto-import-scans.md § Security.
+
+services:
+  hp-scan:
+    volumes:
+      - type: volume
+        source: sonix-data
+        target: /scan/inbox
+        volume:
+          subpath: inbox
+      - type: volume
+        source: sonix-data
+        target: /scan/hp-scan
+        volume:
+          subpath: hp-scan
+      - ./deploy/hp-scan/entrypoint.sh:/sonix-entrypoint.sh:ro
+      - ./deploy/hp-scan/listenCmd.js:/app/commands/listenCmd.js:ro

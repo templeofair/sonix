@@ -1,0 +1,43 @@
+# Keep secrets, local data, and junk out of `COPY . .` / `COPY web/`.
+# The runtime image only gets the compiled binary; this file stops them
+# landing in the build context and intermediate layers.
+
+.git
+.cursor
+
+# Secrets (keep .env.example if present)
+.env
+.env.*
+!.env.example
+*.local
+
+# Local data and letter fixtures
+data
+*.db
+Demo-doc
+
+# Frontend artefacts (rebuilt in the image)
+web/node_modules
+web/dist
+web/.vite
+npm-debug.log*
+.npm
+
+# Compose host overlays
+docker-compose.override.yml
+compose.override.yml
+
+# Editor / OS
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+
+# Build leftovers
+*.exe
+*.test
+*.out
+vendor

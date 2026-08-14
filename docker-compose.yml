@@ -1,0 +1,109 @@
+services:
+  app:
+    build: .
+    # After host reboot, start this container when Docker starts (if it was running before).
+    restart: unless-stopped
+    # Bind on all host interfaces so phones and PCs on the same LAN can reach the app.
+    ports:
+      # Defaults 9080/9443. Do not force 0.0.0.0 — that is IPv4-only; Open WebUI-style
+      # publish binds IPv4+IPv6. Override host doors in .env when needed:
+      #   SONIX_HTTP_PORT=3000
+      #   SONIX_HTTPS_PORT=3443
+      - "${SONIX_HTTP_PORT:-9080}:9080"
+      - "${SONIX_HTTPS_PORT:-9443}:9443"
+    environment:
+      # Listen on all interfaces inside the container (default); explicit for LAN clarity.
+      - SERVER_ADDR=:9080
+      - HTTPS_ADDR=:9443
+      - SESSION_SECRET=${SESSION_SECRET:?Set SESSION_SECRET in .env (openssl rand -hex 32)}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      # Same tag for vision + text; for German OCR specialist override both, e.g. Keyvan/german-ocr-turbo:latest
+      - OLLAMA_VISION_MODEL=${OLLAMA_VISION_MODEL:-gemma3:latest}
+      - OLLAMA_TEXT_MODEL=${OLLAMA_TEXT_MODEL:-gemma3:latest}
+      # Minutes to wait for Ollama (default 15). Increase if extraction times out (e.g. 30).
+      - OLLAMA_TIMEOUT_MINUTES=${OLLAMA_TIMEOUT_MINUTES:-15}
+      # Wall-clock budget for one full document job (vision + text). Default 60.
+      - EXTRACTION_JOB_TIMEOUT_MINUTES=${EXTRACTION_JOB_TIMEOUT_MINUTES:-60}
+      # How many document extraction jobs may run at once. Default 1.
+      - EXTRACTION_MAX_CONCURRENT=${EXTRACTION_MAX_CONCURRENT:-1}
+      # Max pages on one letter (upload + PDF). Default 50.
+      - DOCUMENT_MAX_PAGES=${DOCUMENT_MAX_PAGES:-50}
+      # pdftoppm timeout in seconds. Default 120.
+      - PDF_CONVERT_TIMEOUT_SECONDS=${PDF_CONVERT_TIMEOUT_SECONDS:-120}
+      # Text pipeline: v2 (page-wise) or v1 (legacy ExtractMetadata).
+      - EXTRACTION_PIPELINE=${EXTRACTION_PIPELINE:-v2}
+      # Page-OCR engine when the client requests OCR (default: tesseract)
+      - OCR_ENGINE=${OCR_ENGINE:-tesseract}
+      # Tesseract language / DPI / page segmentation (German letters + phone orientation)
+      - OCR_LANG=${OCR_LANG:-deu+eng}
+      - OCR_DPI=${OCR_DPI:-300}
+      - OCR_PSM=${OCR_PSM:-1}
+      - DATA_DIR=/app/data
+      # Auto-import scans (also toggleable in Settings). Default off until enabled.
+      - IMPORT_INBOX_ENABLED=${IMPORT_INBOX_ENABLED:-false}
+      - IMPORT_AUTO_EXTRACT=${IMPORT_AUTO_EXTRACT:-true}
+      - IMPORT_INBOX_DIR=/app/data/inbox
+      # LAN IPs for the self-signed HTTPS cert (set by update-container.sh).
+      - TLS_EXTRA_IPS=${TLS_EXTRA_IPS:-}
+      - TLS_EXTRA_HOSTS=${TLS_EXTRA_HOSTS:-}
+      # Optional: create initial user when the DB has no users (only on first run)
+      - SEED_USERNAME=${SEED_USERNAME:-}
+      - SEED_PASSWORD=${SEED_PASSWORD:-}
+    volumes:
+      - sonix-data:/app/data
+    # So the app (in container) can reach Ollama on the host (Linux: host.docker.internal needs this)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Optional HP Scan-to-Computer bridge (e.g. OfficeJet 250). Same volume inbox as Sonix.
+  # docker compose --profile hp-scan up -d
+  # Safer (Compose V2 + Engine 26+): add -f deploy/hp-scan/compose.hp-scan.yml — see docs/auto-import-scans.md § Security.
+  # Image pinned by digest (not :latest). Bump digest deliberately after inspecting upstream.
+  hp-scan:
+    profiles: ["hp-scan"]
+    image: docker.io/manuc66/node-hp-scan-to@sha256:4ae96cc6540568169d49cc99bcaca283693f71817e60a8882b40baef2f6a7c71
+    restart: unless-stopped
+    # Host network is required for many HP Walkup listen setups; prefer bridge only if Phase 0 proves OK.
+    network_mode: host
+    entrypoint: ["/bin/sh", "/sonix-entrypoint.sh"]
+    command: ["/app.sh"]
+    # no-new-privileges:true breaks some Docker/kernel hosts (exec /bin/sh: operation not permitted)
+    # before the entrypoint runs. Leave off by default; re-enable on hosts that tolerate it:
+    #   security_opt:
+    #     - no-new-privileges:true
+    # cap_drop: ALL still breaks upstream s6 cont-init (chown /app, adduser) — do not add.
+    environment:
+      # Optional fallback if Settings has not written printer_ip yet (IPv4).
+      - IP=${HP_SCAN_IP:-}
+      - LABEL=${HP_SCAN_LABEL:-Sonix}
+      - DIR=/scan/inbox
+      - TEMP_DIR=/tmp/hp-scan
+      - PGID=${HP_SCAN_PGID:-1000}
+      - PUID=${HP_SCAN_PUID:-1000}
+      # Pinned image 1.8.0 (this digest): /app.sh does not map ADD_EMULATED_DUPLEX
+      # or --health-check-port (always enables --health-check; default port 3000).
+      # Pass both via CMDLINE. Host network: default 3001 so host :3000 stays free.
+      # When bumping the digest to an image whose app.sh maps ADD_EMULATED_DUPLEX,
+      # prefer that env (optional mode: document-wise) and drop the duplex flag if redundant.
+      - CMDLINE=--add-emulated-duplex --health-check-port ${HP_SCAN_HEALTH_PORT:-3001}
+      - PATTERN="scan"_dd-mm-yyyy_hh-MM-ss
+      - EMULATED_DUPLEX_IDLE_TIMEOUT_SEC=${EMULATED_DUPLEX_IDLE_TIMEOUT_SEC:-600}
+    # Image HEALTHCHECK curls :3000; override to match CMDLINE port.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:${HP_SCAN_HEALTH_PORT:-3001}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 5s
+      retries: 3
+    volumes:
+      # Compose 1.29 cannot mount volume subpaths; helper sees the whole data volume.
+      # Restrict trust: pin digest; keep auto-import off until needed.
+      - sonix-data:/scan
+      - ./deploy/hp-scan/entrypoint.sh:/sonix-entrypoint.sh:ro
+      # Patch: 1.8.0 emulated-duplex backs omitted scanToPdf (wrote JPEGs to inbox). Drop when bumping past that fix.
+      - ./deploy/hp-scan/listenCmd.js:/app/commands/listenCmd.js:ro
+    tmpfs:
+      - /tmp:mode=1777,size=256m
+
+volumes:
+  sonix-data:
