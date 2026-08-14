@@ -3,8 +3,8 @@ module github.com/templeofair/sonix
 go 1.22
 
 require (
-	golang.org/x/crypto v0.31.0
-	golang.org/x/image v0.23.0
+	golang.org/x/crypto v0.33.0
+	golang.org/x/image v0.24.0
 	modernc.org/sqlite v1.36.0
 )
 

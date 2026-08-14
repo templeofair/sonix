@@ -4,15 +4,41 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Latest of these require Go 1.25; Docker/CI stay on 1.22.
+    ignore:
+      - dependency-name: "golang.org/x/crypto"
+      - dependency-name: "golang.org/x/image"
+      - dependency-name: "modernc.org/sqlite"
+
   - package-ecosystem: npm
     directory: /web
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jsdom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@testing-library/jest-dom"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: monthly
+    # Stay on node 20 / Go 1.22 / Alpine 3.19 (digest and patch only).
+    # 1.22→1.24 and 3.19→3.24 are semver-minor, so major-only ignore is not enough.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
