@@ -9,7 +9,7 @@ COPY web/ ./
 RUN npm install && npx vite build
 
 # Stage 2: build Go binary and copy static
-FROM docker.io/library/golang:1.22-alpine@sha256:1699c10032ca2582ec89a24a1312d986a3f094aed3d5c1147b19880afe40e052 AS go
+FROM docker.io/library/golang:1.24-alpine@sha256:8bee1901f1e530bfb4a7850aa7a479d17ae3a18beb6e09064ed54cfd245b7191 AS go
 WORKDIR /app
 COPY go.mod go.sum* ./
 RUN go mod download
