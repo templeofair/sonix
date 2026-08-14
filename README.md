@@ -1,6 +1,8 @@
 # Sonix
 
-Self-hosted letter scanner for a home LAN. Scan or upload pages on your own machine; they are not sent to a Sonix cloud.
+Germany is good at many things. Short letters are not one of them.
+
+Sonix is a hobby project for that doormat pile: scan, organise, and translate letters and documents on your own machine. Also a journey with AI tools — the model reads the Amtsdeutsch; you keep the coffee. Self-hosted; nothing goes to a Sonix cloud.
 
 You get searchable text (Tesseract OCR or Ollama vision), an English translation, a short summary, and a document date — then search, tag, and export.
 
