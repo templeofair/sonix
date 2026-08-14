@@ -2,7 +2,7 @@
 # Multi-stage build: frontend -> Go binary -> minimal Alpine runtime.
 # Base images are pinned by digest for reproducible, auditable builds.
 # Stage 1: build frontend
-FROM docker.io/library/node:20-alpine@sha256:09e2b3d9726018aecf269bd35325f46bf75046a643a66d28360ec71132750ec8 AS web
+FROM docker.io/library/node:26-alpine@sha256:aadf416b2cdce311a8811ba3f0608a61b77dbf997500e2eafe781b51f6a0b019 AS web
 WORKDIR /app
 COPY web/ ./
 # Skip tsc so stub .d.ts don't conflict with @types/react in container; Vite still bundles.
