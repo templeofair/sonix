@@ -2,7 +2,32 @@
 
 Sonix is **MIT** (see `LICENSE`). This file records **other people’s** work that we ship or overlay.
 
-Direct npm runtime/dev licences were read from `web/package.json` / installed packages: mostly MIT; TypeScript Apache-2.0; **Inter OFL-1.1** (below). Go module licences (`golang.org/x/crypto`, `golang.org/x/image`, `modernc.org/sqlite` and transitives) are from public proxies with **no private module**; a `go-licenses` report should be recorded when that tool is available.
+### Go (`go-licenses report ./...`, 2026-08-14)
+
+All modules are from public proxies. **No private module, no `replace`, no vendor/.** `modernc.org/mathutil` was `Unknown` to the classifier; its `LICENSE` is BSD-3-Clause (copyright The mathutil Authors).
+
+| Module | Licence |
+|--------|---------|
+| github.com/templeofair/sonix | MIT |
+| github.com/dustin/go-humanize | MIT |
+| github.com/google/uuid | BSD-3-Clause |
+| github.com/remyoudompheng/bigfft | BSD-3-Clause |
+| golang.org/x/crypto | BSD-3-Clause |
+| golang.org/x/exp/constraints | BSD-3-Clause |
+| golang.org/x/image | BSD-3-Clause |
+| golang.org/x/sys | BSD-3-Clause |
+| modernc.org/libc | BSD-3-Clause |
+| modernc.org/mathutil | BSD-3-Clause |
+| modernc.org/memory | BSD-3-Clause |
+| modernc.org/sqlite | BSD-3-Clause |
+
+`govulncheck` on the scanner host (Go 1.24.1) reported standard-library findings in that toolchain. The **Docker image builds with digest-pinned `golang:1.22-alpine`**. Direct module vulns were not reachable from Sonix call sites. Re-run after bumping the Go image.
+
+### npm (`license-checker` + `npm audit`, 2026-08-14)
+
+Installed tree: 298 MIT, 12 ISC, 8 Apache-2.0, 3 MPL-2.0 (build-time), 2 MIT-0, 2 BSD-2-Clause, 2 BSD-3-Clause, 1 OFL-1.1 (Inter), 1 CC-BY-4.0, 1 BlueOak-1.0.0, 1 CC0-1.0. The `UNLICENSED` row is this repo’s private package `sonix-web`. **No copyleft in the production SPA bundle** beyond Inter OFL-1.1 (below).
+
+`npm audit --omit=dev`: 0 critical / 0 high; 3 moderate in `react-router` / `@remix-run/router` (open redirect on protocol-relative `//` URLs). Sonix uses relative `/api` paths. Full `npm audit` highs were **Vite dev-server** issues (not shipped in the Alpine runtime image).
 
 The Docker image installs Tesseract language data and `poppler-utils`. Publishing **container images** (not just this source) may carry extra redistribution duties — review before pushing images to a registry.
 

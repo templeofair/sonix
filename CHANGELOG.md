@@ -7,3 +7,4 @@ This project starts at the public snapshot. Private development history is not i
 ### Added
 
 - Initial public source snapshot: self-hosted letter scanner (Go API + React SPA + Docker Compose).
+- Recorded Go and npm licence inventory in `THIRD-PARTY-NOTICES.md`.
